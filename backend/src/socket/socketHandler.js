@@ -1,6 +1,4 @@
-// Socket.io initialization foundation for NetTalk
-// Specific real-time events (join-room, send-message, typing, etc.) will be added in Phase 2
-
+// Manages client socket connections
 const initializeSocket = (io) => {
   io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`);
