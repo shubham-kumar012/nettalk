@@ -12,7 +12,7 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 - **Custom Warm Visual Theme**: Designed with an understated, warm cream/earthy color palette for comfortable long-form reading without eye strain.
 - **Room-based Navigation**: Switch seamlessly between channels like `# General`, `# Developers`, and `# Random`.
 - **Active Presence & Typing Indicators**: Visual cues for online team members and real-time typing status.
-- **Modular Component Architecture**: Decoupled UI components and service layers for easy maintenance and testing.
+- **Modular Component Architecture**: Decoupled UI components, MongoDB data models, and service layers for easy maintenance and testing.
 
 ---
 
@@ -25,7 +25,7 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 
 ### Backend
 - **Node.js & Express** — REST API & HTTP server
-- **Socket.io** — Bi-directional WebSocket communication
+- **Socket.io** — Bi-directional WebSocket communication foundation
 - **MongoDB & Mongoose** — Document database & data modeling
 - **Cors & Dotenv** — Middleware configuration and environment management
 
@@ -58,11 +58,23 @@ NetTalk/
 │
 ├── backend/                      # Node.js Express server
 │   ├── src/
-│   │   ├── config/               # Database and server config
+│   │   ├── config/
+│   │   │   └── db.js             # MongoDB connection setup
 │   │   ├── controllers/          # API route controllers
+│   │   │   ├── healthController.js
+│   │   │   ├── userController.js
+│   │   │   ├── roomController.js
+│   │   │   └── messageController.js
 │   │   ├── models/               # Mongoose data models
+│   │   │   ├── User.js
+│   │   │   ├── Room.js
+│   │   │   └── Message.js
 │   │   ├── routes/               # Express route declarations
-│   │   ├── socket/               # Socket connection and event handlers
+│   │   │   ├── healthRoutes.js
+│   │   │   ├── users.js
+│   │   │   ├── rooms.js
+│   │   │   └── messages.js
+│   │   ├── socket/               # Socket connection handlers
 │   │   └── server.js             # Server entry point
 │   ├── .env.example              # Environment variables template
 │   ├── .env                      # Local environment settings
@@ -75,11 +87,52 @@ NetTalk/
 
 ---
 
+## Phase 2 Implementation
+
+Phase 2 introduces the MongoDB database layer, data modeling, validation, and REST APIs for user identities, room channels, and chat message history:
+
+**Implemented:**
+- **MongoDB Connection**: Direct Mongoose database connection setup in `backend/src/config/db.js`.
+- **User Model**: Mongoose schema supporting unique, trimmed `username` and timestamps.
+- **Room Model**: Mongoose schema supporting unique, trimmed room `name` and timestamps.
+- **Message Model**: Schema referencing `Room` and `User` with message content validation and chronological sorting.
+- **User APIs**: User creation and listing endpoints.
+- **Room APIs**: Room channel creation and listing endpoints.
+- **Message / Chat History APIs**: Fetching populated message histories per room and message storage in MongoDB.
+- **Basic Validation**: Prevention of empty inputs, duplicate usernames/rooms, and invalid ID handling.
+
+> *Note: Real-time Socket.io events (e.g. `joinRoom`, `sendMessage`, `typing`) will be wired in Phase 3.*
+
+---
+
+## API Documentation
+
+### Health Check
+- `GET /api/health` — Verify backend server status
+
+### Users
+- `POST /api/users` — Create a new user identity  
+  *Body:* `{"username": "Shubham"}`
+- `GET /api/users` — Get all users
+
+### Rooms
+- `POST /api/rooms` — Create a new chat room  
+  *Body:* `{"name": "Developers"}`
+- `GET /api/rooms` — Get all chat rooms
+
+### Messages
+- `POST /api/rooms/:roomId/messages` — Create and store a new message in a room  
+  *Body:* `{"senderId": "<userId>", "content": "Hello everyone!"}`
+- `GET /api/rooms/:roomId/messages` — Get chronological chat history for a room (with populated sender info)
+
+---
+
 ## Getting Started
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v16 or higher recommended)
 - [npm](https://www.npmjs.com/)
+- [MongoDB](https://www.mongodb.com/) (Local instance or MongoDB Atlas URI)
 
 ---
 
@@ -118,7 +171,12 @@ The application will open in your browser at `http://localhost:3000`.
 
 ---
 
-## Development Notes
+## Environment Variables
 
-- **Backend Health Check**: `GET /api/health` returns server status and timestamp.
-- **Environment Variables**: Configure port and database strings in `backend/.env` (reference `backend/.env.example`).
+Create `backend/.env` based on `backend/.env.example`:
+
+```env
+PORT=5000
+CLIENT_URL=http://localhost:3000
+MONGO_URI=mongodb://localhost:27017/nettalk
+```
