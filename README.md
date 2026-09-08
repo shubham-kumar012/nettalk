@@ -1,19 +1,33 @@
 # NetTalk
 
-A simple real-time chat application built as a full-stack technical assessment project.
+NetTalk is a lightweight, real-time team chat application designed for simple and distraction-free communication across multiple topic rooms.
+
+Built with a **Node.js/Express** backend and a **React + Material UI** frontend, the project emphasizes a clean, modular structure, responsive desktop design, and scalable real-time communication using **Socket.io**.
+
+---
+
+## Features (Current & Roadmap)
+
+- **Desktop-first Chat Layout**: Clean side-by-side interface with channel navigation, active members list, and conversation feed.
+- **Custom Warm Visual Theme**: Designed with an understated, warm cream/earthy color palette for comfortable long-form reading without eye strain.
+- **Room-based Navigation**: Switch seamlessly between channels like `# General`, `# Developers`, and `# Random`.
+- **Active Presence & Typing Indicators**: Visual cues for online team members and real-time typing status.
+- **Modular Component Architecture**: Decoupled UI components and service layers for easy maintenance and testing.
+
+---
 
 ## Tech Stack
 
-**Frontend:**
-- React (Create React App)
-- Material UI (MUI)
-- Socket.io Client
+### Frontend
+- **React.js** (Create React App)
+- **Material UI (MUI)** — Component library & customized theme system
+- **Socket.io Client** — Real-time event communication
 
-**Backend:**
-- Node.js
-- Express
-- Socket.io
-- MongoDB / Mongoose
+### Backend
+- **Node.js & Express** — REST API & HTTP server
+- **Socket.io** — Bi-directional WebSocket communication
+- **MongoDB & Mongoose** — Document database & data modeling
+- **Cors & Dotenv** — Middleware configuration and environment management
 
 ---
 
@@ -22,36 +36,36 @@ A simple real-time chat application built as a full-stack technical assessment p
 ```text
 NetTalk/
 │
-├── frontend/                     # React client application (CRA)
-│   ├── public/                   # Static assets and index.html
+├── frontend/                     # React web client
+│   ├── public/                   # Static HTML template & web manifest
 │   ├── src/
 │   │   ├── components/           # Reusable UI components
-│   │   │   ├── ChatRoom/         # Active room header & message feed
-│   │   │   ├── MessageInput/     # Message composer and send action
-│   │   │   ├── OnlineUsersList/  # Active online members sidebar list
-│   │   │   ├── RoomList/         # Channel / Room navigation
-│   │   │   └── TypingIndicator/  # Typing status indicator (Phase 2 foundation)
+│   │   │   ├── ChatRoom/         # Room header & message feed
+│   │   │   ├── MessageInput/     # Message composer with send button
+│   │   │   ├── OnlineUsersList/  # Active online members list
+│   │   │   ├── RoomList/         # Channels & room navigation
+│   │   │   └── TypingIndicator/  # Typing feedback component
 │   │   ├── pages/
-│   │   │   └── ChatPage/         # Main desktop chat page shell
+│   │   │   └── ChatPage/         # Main chat container shell
 │   │   ├── services/
-│   │   │   ├── api.js            # REST API configuration & health client
-│   │   │   └── socket.js         # Socket.io client setup
-│   │   ├── App.js                # App root with Material UI ThemeProvider
-│   │   ├── index.js              # React DOM render entry point
-│   │   ├── index.css             # Base reset & font styling
-│   │   └── theme.js              # Material UI theme configuration
+│   │   │   ├── api.js            # REST API client & health check
+│   │   │   └── socket.js         # Socket.io connection setup
+│   │   ├── App.js                # App entry with MUI ThemeProvider
+│   │   ├── index.js              # DOM root mount
+│   │   ├── index.css             # Base reset & typography styling
+│   │   └── theme.js              # Custom warm color palette configuration
 │   └── package.json
 │
-├── backend/                      # Express & Socket.io server
+├── backend/                      # Node.js Express server
 │   ├── src/
-│   │   ├── config/               # Database and configuration helpers
-│   │   ├── controllers/          # Request handlers (e.g., health check)
-│   │   ├── models/               # MongoDB Mongoose models (Phase 2)
-│   │   ├── routes/               # Express API route definitions
-│   │   ├── socket/               # Socket.io connection handlers
-│   │   └── server.js             # Main server entry point
+│   │   ├── config/               # Database and server config
+│   │   ├── controllers/          # API route controllers
+│   │   ├── models/               # Mongoose data models
+│   │   ├── routes/               # Express route declarations
+│   │   ├── socket/               # Socket connection and event handlers
+│   │   └── server.js             # Server entry point
 │   ├── .env.example              # Environment variables template
-│   ├── .env                      # Local environment configuration
+│   ├── .env                      # Local environment settings
 │   ├── package.json
 │   └── .gitignore
 │
@@ -61,34 +75,50 @@ NetTalk/
 
 ---
 
-## Current Status (Phase 1)
+## Getting Started
 
-Phase 1 establishes the clean project foundation:
-- **Frontend**: A desktop-first Material UI chat shell with custom warm cream/off-white theme, static room navigation, placeholder messages, online users display, and socket/api client scaffolding.
-- **Backend**: Express server configuration with CORS, Socket.io initialization, environment variables support, and a `/api/health` status verification route.
-
-> **Note:** Real-time Socket.io events, message persistence with MongoDB, user authentication, and active typing listeners will be implemented in subsequent phases.
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v16 or higher recommended)
+- [npm](https://www.npmjs.com/)
 
 ---
 
-## Running Locally
-
-### 1. Backend Server
+### 1. Backend Setup
 
 ```bash
+# Navigate to the backend directory
 cd backend
+
+# Install dependencies
 npm install
+
+# Start the development server
 npm run dev
 ```
 
-The backend server will start on `http://localhost:5000`. You can verify it with `GET http://localhost:5000/api/health`.
+The backend server will run on `http://localhost:5000`.  
+You can test the server status by opening `http://localhost:5000/api/health`.
 
-### 2. Frontend Application
+---
+
+### 2. Frontend Setup
 
 ```bash
+# Navigate to the frontend directory
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start the React development server
 npm start
 ```
 
-The React development server will start on `http://localhost:3000`.
+The application will open in your browser at `http://localhost:3000`.
+
+---
+
+## Development Notes
+
+- **Backend Health Check**: `GET /api/health` returns server status and timestamp.
+- **Environment Variables**: Configure port and database strings in `backend/.env` (reference `backend/.env.example`).
