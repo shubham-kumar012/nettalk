@@ -6,12 +6,16 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 
 ---
 
-## Features (Current & Roadmap)
+## Features
 
 - **Desktop-first Chat Layout**: Clean side-by-side interface with channel navigation, active members list, and conversation feed.
-- **Custom Warm Visual Theme**: Designed with an understated, warm cream/earthy color palette for comfortable long-form reading without eye strain.
-- **Room-based Navigation**: Switch seamlessly between channels like `# General`, `# Developers`, and `# Random`.
-- **Active Presence & Typing Indicators**: Visual cues for online team members and real-time typing status.
+- **Custom Warm Visual Theme**: Designed with an understated, warm cream/earthy color palette for comfortable reading without eye strain.
+- **Room-based Real-Time Communication**: Switch seamlessly between channels like `# General`, `# Developers`, and `# Random`.
+- **Instant Messaging & Broadcasting**: Messages are saved to MongoDB and broadcasted in real-time to active room members via Socket.io.
+- **Room Isolation**: Messages sent in one room are delivered strictly to users in that room.
+- **Active Presence**: Dynamic online users list showing connected members per room with status indicators.
+- **Typing Indicator**: Real-time feedback when another participant is typing.
+- **Persistent Chat History**: Previous room messages are loaded from MongoDB upon joining a channel.
 - **Modular Component Architecture**: Decoupled UI components, MongoDB data models, and service layers for easy maintenance and testing.
 
 ---
@@ -21,11 +25,11 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 ### Frontend
 - **React.js** (Create React App)
 - **Material UI (MUI)** — Component library & customized theme system
-- **Socket.io Client** — Real-time event communication
+- **Socket.io Client** — Real-time bi-directional WebSocket communication
 
 ### Backend
 - **Node.js & Express** — REST API & HTTP server
-- **Socket.io** — Bi-directional WebSocket communication foundation
+- **Socket.io** — Real-time event communication engine
 - **MongoDB & Mongoose** — Document database & data modeling
 - **Cors & Dotenv** — Middleware configuration and environment management
 
@@ -40,15 +44,15 @@ NetTalk/
 │   ├── public/                   # Static HTML template & web manifest
 │   ├── src/
 │   │   ├── components/           # Reusable UI components
-│   │   │   ├── ChatRoom/         # Room header & message feed
-│   │   │   ├── MessageInput/     # Message composer with send button
+│   │   │   ├── ChatRoom/         # Room header & scrollable message feed
+│   │   │   ├── MessageInput/     # Message composer with send button & typing trigger
 │   │   │   ├── OnlineUsersList/  # Active online members list
-│   │   │   ├── RoomList/         # Channels & room navigation
-│   │   │   └── TypingIndicator/  # Typing feedback component
+│   │   │   ├── RoomList/         # Channels list & room creation dialog
+│   │   │   └── TypingIndicator/  # Active typing status component
 │   │   ├── pages/
-│   │   │   └── ChatPage/         # Main chat container shell
+│   │   │   └── ChatPage/         # Main chat container connecting Socket.io & REST
 │   │   ├── services/
-│   │   │   ├── api.js            # REST API client & health check
+│   │   │   ├── api.js            # REST API client helper
 │   │   │   └── socket.js         # Socket.io connection setup
 │   │   ├── App.js                # App entry with MUI ThemeProvider
 │   │   ├── index.js              # DOM root mount
@@ -58,8 +62,7 @@ NetTalk/
 │
 ├── backend/                      # Node.js Express server
 │   ├── src/
-│   │   ├── config/
-│   │   │   └── db.js             # MongoDB connection setup
+│   │   ├── config/               # Database and server config
 │   │   ├── controllers/          # API route controllers
 │   │   │   ├── healthController.js
 │   │   │   ├── userController.js
@@ -74,7 +77,7 @@ NetTalk/
 │   │   │   ├── users.js
 │   │   │   ├── rooms.js
 │   │   │   └── messages.js
-│   │   ├── socket/               # Socket connection handlers
+│   │   ├── socket/               # Socket.io connection & event handlers
 │   │   └── server.js             # Server entry point
 │   ├── .env.example              # Environment variables template
 │   ├── .env                      # Local environment settings
@@ -87,21 +90,33 @@ NetTalk/
 
 ---
 
-## Phase 2 Implementation
+## Phase 3 — Real-Time Chat with Socket.io
 
-Phase 2 introduces the MongoDB database layer, data modeling, validation, and REST APIs for user identities, room channels, and chat message history:
+Phase 3 connects the React frontend, Express backend, and MongoDB database using Socket.io for live communication:
 
-**Implemented:**
-- **MongoDB Connection**: Direct Mongoose database connection setup in `backend/src/config/db.js`.
-- **User Model**: Mongoose schema supporting unique, trimmed `username` and timestamps.
-- **Room Model**: Mongoose schema supporting unique, trimmed room `name` and timestamps.
-- **Message Model**: Schema referencing `Room` and `User` with message content validation and chronological sorting.
-- **User APIs**: User creation and listing endpoints.
-- **Room APIs**: Room channel creation and listing endpoints.
-- **Message / Chat History APIs**: Fetching populated message histories per room and message storage in MongoDB.
-- **Basic Validation**: Prevention of empty inputs, duplicate usernames/rooms, and invalid ID handling.
+- **Socket.io Connection**: Persistent WebSocket connection with automatic reconnection.
+- **Joining Chat Rooms (`joinRoom`)**: Users join specific room channels and leave previous ones.
+- **Real-Time Messaging (`chatMessage`)**: Messages sent by any user are instantly delivered to all participants in the active room.
+- **MongoDB Message Persistence**: Every message is stored in MongoDB before broadcast, preserving full chat history.
+- **Room-Based Isolation**: Messages and notifications in `# General` do not leak into `# Developers` or other rooms.
+- **Live Online Users (`onlineUsers`)**: In-memory tracking of currently connected sockets per room with instant join/leave updates.
+- **Typing Indicator (`typing`)**: Lightweight typing status notification that clears automatically on send or inactivity.
+- **Chat History Loading**: REST API (`GET /api/rooms/:roomId/messages`) loads stored conversation history upon entering any room.
+- **Room Switching**: Seamlessly switches channels, loads past history, and updates online members without page reloads.
 
-> *Note: Real-time Socket.io events (e.g. `joinRoom`, `sendMessage`, `typing`) will be wired in Phase 3.*
+### Real-Time Socket.io Flow
+
+```text
+User types message
+        ↓
+socket.emit("chatMessage", { roomId, senderId, content })
+        ↓
+Server receives message & saves it to MongoDB
+        ↓
+Server broadcasts: io.to(roomId).emit("chatMessage", savedMessage)
+        ↓
+Connected room participants receive message & update UI instantly
+```
 
 ---
 
@@ -178,5 +193,5 @@ Create `backend/.env` based on `backend/.env.example`:
 ```env
 PORT=5000
 CLIENT_URL=http://localhost:3000
-MONGO_URI=mongodb://localhost:27017/nettalk
+MONGODB_URI=mongodb://localhost:27017/nettalk
 ```
