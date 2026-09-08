@@ -6,6 +6,14 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 
 ---
 
+## 🌐 Live Demo & Deployment
+
+- **Frontend (Deployed on Vercel)**: [https://frontend-olive-five-40.vercel.app](https://frontend-olive-five-40.vercel.app)
+- **Backend API (Deployed on Render)**: [https://nettalk-2hsr.onrender.com/api](https://nettalk-2hsr.onrender.com/api)
+- **Backend Health Check**: [https://nettalk-2hsr.onrender.com/api/health](https://nettalk-2hsr.onrender.com/api/health)
+
+---
+
 ## Features
 
 - **Desktop-first Chat Layout**: Clean side-by-side interface with channel navigation, active members list, and conversation feed.
@@ -202,11 +210,22 @@ The application will open in your browser at `http://localhost:3000`.
 
 ## Environment Variables
 
+### Backend (`backend/.env`)
+
 Create `backend/.env` based on `backend/.env.example`:
 
 ```env
 PORT=5000
 CLIENT_URL=http://localhost:3000
 MONGODB_URI=mongodb://localhost:27017/nettalk
+```
+
+### Frontend (`frontend/.env`)
+
+Create `frontend/.env` based on `frontend/.env.example`:
+
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_SOCKET_URL=http://localhost:5000
 ```
 
