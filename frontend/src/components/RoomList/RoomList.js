@@ -157,7 +157,8 @@ const RoomList = ({
             borderRadius: '6px',
             p: 1,
             width: '100%',
-            maxWidth: '380px'
+            maxWidth: '380px',
+            mx: 2
           }
         }}
       >

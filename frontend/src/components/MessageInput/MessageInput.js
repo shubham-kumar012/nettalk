@@ -50,23 +50,26 @@ const MessageInput = ({ disabled = false, onSendMessage, onTyping }) => {
       component="form"
       onSubmit={handleSubmit}
       sx={{
-        p: 2,
+        p: { xs: 1.2, sm: 2 },
         backgroundColor: '#FBF9F4',
         borderTop: '1px solid #DDD6C8',
         display: 'flex',
         alignItems: 'center',
-        gap: 1.5
+        gap: { xs: 1, sm: 1.5 }
       }}
     >
       <TextField
         fullWidth
         size="small"
-        placeholder="Type a message... (Press Enter to send)"
+        placeholder="Type a message..."
         value={messageText}
         onChange={handleChange}
         disabled={disabled}
         variant="outlined"
         autoComplete="off"
+        inputProps={{
+          'aria-label': 'Type a message'
+        }}
         sx={{
           backgroundColor: '#FFFFFF',
           borderRadius: '4px',
@@ -83,9 +86,9 @@ const MessageInput = ({ disabled = false, onSendMessage, onTyping }) => {
             }
           },
           '& .MuiInputBase-input': {
-            fontSize: '0.92rem',
+            fontSize: { xs: '0.88rem', sm: '0.92rem' },
             color: '#292824',
-            py: 1.2
+            py: { xs: 0.9, sm: 1.2 }
           }
         }}
       />
@@ -93,13 +96,17 @@ const MessageInput = ({ disabled = false, onSendMessage, onTyping }) => {
         type="submit"
         variant="contained"
         disabled={disabled || !messageText.trim()}
-        endIcon={<SendRoundedIcon sx={{ fontSize: 18 }} />}
+        aria-label="Send message"
+        endIcon={<SendRoundedIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
         sx={{
           backgroundColor: '#756B56',
           color: '#FBF9F4',
-          px: 2.5,
-          py: 1,
+          px: { xs: 1.8, sm: 2.5 },
+          py: { xs: 0.8, sm: 1 },
+          minWidth: { xs: '72px', sm: 'auto' },
           fontWeight: 600,
+          fontSize: { xs: '0.82rem', sm: '0.875rem' },
+          flexShrink: 0,
           '&:hover': {
             backgroundColor: '#5C5443'
           },
