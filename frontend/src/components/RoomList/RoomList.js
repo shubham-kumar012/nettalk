@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -6,24 +6,61 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Button
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import TagRoundedIcon from '@mui/icons-material/TagRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 
-const DEFAULT_ROOMS = [
-  { id: 'general', name: 'General', description: 'General discussion' },
-  { id: 'developers', name: 'Developers', description: 'Tech & coding discussions' },
-  { id: 'random', name: 'Random', description: 'Casual conversations' }
-];
-
 const RoomList = ({
-  rooms = DEFAULT_ROOMS,
-  activeRoomId = 'general',
-  onSelectRoom = () => {}
+  rooms = [],
+  activeRoomId = '',
+  onSelectRoom = () => {},
+  onCreateRoom = () => {}
 }) => {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newRoomName, setNewRoomName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorText, setErrorText] = useState('');
+
+  const handleOpenDialog = () => {
+    setNewRoomName('');
+    setErrorText('');
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setNewRoomName('');
+    setErrorText('');
+  };
+
+  const handleCreateSubmit = async (e) => {
+    e.preventDefault();
+    if (!newRoomName.trim()) {
+      setErrorText('Room name cannot be empty');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setErrorText('');
+      await onCreateRoom(newRoomName.trim());
+      handleCloseDialog();
+    } catch (err) {
+      setErrorText(err.message || 'Failed to create room');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Box sx={{ px: 2, py: 1.5 }}>
+      {/* Rooms header with create action */}
       <Box
         sx={{
           display: 'flex',
@@ -48,6 +85,7 @@ const RoomList = ({
         <Button
           size="small"
           startIcon={<AddRoundedIcon sx={{ fontSize: 16 }} />}
+          onClick={handleOpenDialog}
           sx={{
             color: '#756B56',
             fontSize: '0.78rem',
@@ -58,22 +96,22 @@ const RoomList = ({
               backgroundColor: '#EEE9DE'
             }
           }}
-          onClick={() => {
-            // Trigger room creation dialog or action
-          }}
         >
           New Room
         </Button>
       </Box>
 
+      {/* Available chat rooms list */}
       <List disablePadding>
         {rooms.map((room) => {
-          const isSelected = room.id === activeRoomId;
+          const roomId = room._id || room.id;
+          const isSelected = roomId === activeRoomId;
+
           return (
             <ListItemButton
-              key={room.id}
+              key={roomId}
               selected={isSelected}
-              onClick={() => onSelectRoom(room.id)}
+              onClick={() => onSelectRoom(roomId)}
               sx={{
                 borderRadius: '4px',
                 px: 1.5,
@@ -107,6 +145,62 @@ const RoomList = ({
           );
         })}
       </List>
+
+      {/* Dialog for creating a new room */}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        PaperProps={{
+          sx: {
+            backgroundColor: '#FBF9F4',
+            border: '1px solid #DDD6C8',
+            borderRadius: '6px',
+            p: 1,
+            width: '100%',
+            maxWidth: '380px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#292824', pb: 1 }}>
+          Create New Room
+        </DialogTitle>
+        <Box component="form" onSubmit={handleCreateSubmit}>
+          <DialogContent sx={{ pt: 1 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              label="Room Name"
+              placeholder="e.g. Design, Announcements"
+              value={newRoomName}
+              onChange={(e) => setNewRoomName(e.target.value)}
+              error={Boolean(errorText)}
+              helperText={errorText}
+              sx={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '4px'
+              }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseDialog} sx={{ color: '#716D64' }}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting || !newRoomName.trim()}
+              sx={{
+                backgroundColor: '#756B56',
+                color: '#FBF9F4',
+                '&:hover': { backgroundColor: '#5C5443' }
+              }}
+            >
+              Create
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
     </Box>
   );
 };

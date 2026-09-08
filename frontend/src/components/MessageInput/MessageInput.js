@@ -1,18 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, TextField, Button } from '@mui/material';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 
 // Bottom composer bar for drafting and sending chat messages
-const MessageInput = ({ disabled = false, onSendMessage }) => {
+const MessageInput = ({ disabled = false, onSendMessage, onTyping }) => {
   const [messageText, setMessageText] = useState('');
+  const typingTimeoutRef = useRef(null);
+
+  // Handle typing indicator trigger
+  const handleChange = (e) => {
+    const text = e.target.value;
+    setMessageText(text);
+
+    if (onTyping) {
+      // Let the room know we started typing
+      onTyping(true);
+
+      // Clear any existing timer and reset the 1.5s stop-typing timer
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        onTyping(false);
+      }, 1500);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!messageText.trim()) return;
-    
+
+    // Send the message text to the parent handler
     if (onSendMessage) {
       onSendMessage(messageText.trim());
     }
+
+    // Stop typing notification immediately upon sending
+    if (onTyping) {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      onTyping(false);
+    }
+
     setMessageText('');
   };
 
@@ -32,11 +61,12 @@ const MessageInput = ({ disabled = false, onSendMessage }) => {
       <TextField
         fullWidth
         size="small"
-        placeholder="Type a message..."
+        placeholder="Type a message... (Press Enter to send)"
         value={messageText}
-        onChange={(e) => setMessageText(e.target.value)}
+        onChange={handleChange}
         disabled={disabled}
         variant="outlined"
+        autoComplete="off"
         sx={{
           backgroundColor: '#FFFFFF',
           borderRadius: '4px',
@@ -62,6 +92,7 @@ const MessageInput = ({ disabled = false, onSendMessage }) => {
       <Button
         type="submit"
         variant="contained"
+        disabled={disabled || !messageText.trim()}
         endIcon={<SendRoundedIcon sx={{ fontSize: 18 }} />}
         sx={{
           backgroundColor: '#756B56',
@@ -71,6 +102,10 @@ const MessageInput = ({ disabled = false, onSendMessage }) => {
           fontWeight: 600,
           '&:hover': {
             backgroundColor: '#5C5443'
+          },
+          '&.Mui-disabled': {
+            backgroundColor: '#DDD6C8',
+            color: '#969187'
           }
         }}
       >

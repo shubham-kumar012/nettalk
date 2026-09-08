@@ -52,7 +52,7 @@ export const createMessage = async (roomId, senderId, content) => {
   return await response.json();
 };
 
-export default {
+const api = {
   API_BASE_URL,
   checkHealth,
   getUsers,
@@ -62,3 +62,5 @@ export default {
   getMessages,
   createMessage
 };
+
+export default api;
