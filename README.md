@@ -6,7 +6,7 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 
 ---
 
-## 🌐 Live Demo & Deployment
+## Live Demo & Deployment
 
 - **Frontend (Deployed on Vercel)**: [https://frontend-olive-five-40.vercel.app](https://frontend-olive-five-40.vercel.app)
 - **Backend API (Deployed on Render)**: [https://nettalk-2hsr.onrender.com/api](https://nettalk-2hsr.onrender.com/api)
