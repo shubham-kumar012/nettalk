@@ -1,0 +1,8 @@
+{
+  "short_name": "NetTalk",
+  "name": "NetTalk Chat Application",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#F4F0E8",
+  "background_color": "#F4F0E8"
+}
