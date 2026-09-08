@@ -7,7 +7,10 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Button
+  Button,
+  Drawer,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import ForumRoundedIcon from '@mui/icons-material/ForumRounded';
 import RoomList from '../../components/RoomList/RoomList';
@@ -18,7 +21,7 @@ import { getRooms, createRoom, getMessages, createUser, getUsers } from '../../s
 
 const ChatPage = () => {
   const [currentUser, setCurrentUser] = useState(() => {
-    // Retrieve previously saved user identity from localStorage if available
+    // Load existing user from localStorage if previously stored
     const saved = localStorage.getItem('nettalk_user');
     return saved ? JSON.parse(saved) : null;
   });
@@ -27,6 +30,10 @@ const ChatPage = () => {
   const [userModalOpen, setUserModalOpen] = useState(!currentUser);
   const [userError, setUserError] = useState('');
 
+  // Mobile drawer state
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Room and message states
   const [rooms, setRooms] = useState([]);
   const [activeRoomId, setActiveRoomId] = useState('');
   const [messages, setMessages] = useState([]);
@@ -34,7 +41,10 @@ const ChatPage = () => {
   const [typingUser, setTypingUser] = useState(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Handle initial user creation or login
+  // Global notification snackbar for errors
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  // Handle setting a username identity
   const handleUserSubmit = async (e) => {
     e.preventDefault();
     const trimmed = usernameInput.trim();
@@ -45,18 +55,16 @@ const ChatPage = () => {
 
     try {
       setUserError('');
-      // Try creating user or find existing user with same username
       let user;
       try {
         user = await createUser(trimmed);
       } catch (err) {
-        // If already exists or error, fetch all users and match
+        // If user already exists or error occurs, match against all users
         const all = await getUsers();
         user = all.find((u) => u.username.toLowerCase() === trimmed.toLowerCase());
       }
 
       if (!user || !user._id) {
-        // If createUser returned an error response object
         const all = await getUsers();
         user = all.find((u) => u.username.toLowerCase() === trimmed.toLowerCase());
       }
@@ -73,13 +81,13 @@ const ChatPage = () => {
     }
   };
 
-  // Load rooms from backend on initial mount
+  // Load available rooms from backend API on mount
   useEffect(() => {
     const fetchRooms = async () => {
       try {
         let availableRooms = await getRooms();
 
-        // If no rooms exist in database yet, create default "General" room
+        // If no rooms exist yet in the database, seed default "General" room
         if (!availableRooms || availableRooms.length === 0) {
           const generalRoom = await createRoom('General');
           availableRooms = [generalRoom];
@@ -87,34 +95,42 @@ const ChatPage = () => {
 
         setRooms(availableRooms);
 
-        // Select the first room by default if none is selected
+        // Default to the first available room
         if (availableRooms.length > 0) {
           setActiveRoomId((prevId) => prevId || availableRooms[0]._id);
         }
       } catch (err) {
         console.error('Failed to fetch rooms:', err);
+        setSnackbarMessage('Failed to load rooms from server');
       }
     };
 
     fetchRooms();
   }, []);
 
-  // Connect socket on mount and disconnect on unmount
+  // Connect socket when entering chat page, disconnect on leave
   useEffect(() => {
     socket.connect();
 
+    const handleConnectError = () => {
+      setSnackbarMessage('Socket disconnected. Reconnecting...');
+    };
+
+    socket.on('connect_error', handleConnectError);
+
     return () => {
+      socket.off('connect_error', handleConnectError);
       socket.disconnect();
     };
   }, []);
 
-  // Load chat history using REST API when active room changes
+  // Load chat history using REST API when switching active rooms
   useEffect(() => {
     if (!activeRoomId) return;
 
     let isMounted = true;
     setIsLoadingHistory(true);
-    setMessages([]); // Clear previous room messages to prevent mixing rooms
+    setMessages([]); // Clear previous room messages immediately
 
     getMessages(activeRoomId)
       .then((history) => {
@@ -125,7 +141,10 @@ const ChatPage = () => {
       })
       .catch((err) => {
         console.error('Failed to load room messages:', err);
-        if (isMounted) setIsLoadingHistory(false);
+        if (isMounted) {
+          setIsLoadingHistory(false);
+          setSnackbarMessage('Failed to load message history');
+        }
       });
 
     return () => {
@@ -133,26 +152,25 @@ const ChatPage = () => {
     };
   }, [activeRoomId]);
 
-  // Join the selected Socket.io room and set up event listeners
+  // Join the selected Socket.io room and bind real-time event listeners
   useEffect(() => {
     if (!currentUser || !activeRoomId) return;
 
-    // Join the current room in Socket.io
+    // Join room in Socket.io
     socket.emit('joinRoom', {
       roomId: activeRoomId,
       userId: currentUser._id,
       username: currentUser.username
     });
 
-    // Reset typing state when switching rooms
+    // Reset typing state on room change
     setTypingUser(null);
 
-    // Listen for incoming chat messages in this room
+    // Receive incoming real-time messages in this room
     const handleChatMessage = (newMessage) => {
       const msgRoomId = newMessage.room?._id || newMessage.room;
       if (msgRoomId === activeRoomId) {
         setMessages((prev) => {
-          // Avoid duplicate messages if received twice
           const alreadyExists = prev.some((m) => m._id === newMessage._id);
           if (alreadyExists) return prev;
           return [...prev, newMessage];
@@ -160,14 +178,14 @@ const ChatPage = () => {
       }
     };
 
-    // Listen for updated online users in this room
+    // Update list of online users in this room
     const handleOnlineUsers = (usersList) => {
       setOnlineUsers(Array.isArray(usersList) ? usersList : []);
     };
 
-    // Listen for typing notifications from other users
+    // Handle typing indicator from other room members
     const handleTyping = ({ username, isTyping }) => {
-      if (username === currentUser.username) return; // Don't show typing for self
+      if (username === currentUser.username) return; // Do not show indicator for oneself
       setTypingUser(isTyping ? username : null);
     };
 
@@ -186,7 +204,7 @@ const ChatPage = () => {
     socket.on('typing', handleTyping);
     socket.on('roomCreated', handleRoomCreated);
 
-    // Clean up socket listeners when switching rooms or unmounting
+    // Clean up listeners when room changes or component unmounts
     return () => {
       socket.off('chatMessage', handleChatMessage);
       socket.off('onlineUsers', handleOnlineUsers);
@@ -195,7 +213,7 @@ const ChatPage = () => {
     };
   }, [currentUser, activeRoomId]);
 
-  // Send a new message through Socket.io
+  // Send message via Socket.io
   const handleSendMessage = useCallback((content) => {
     if (!currentUser || !activeRoomId || !content.trim()) return;
 
@@ -206,7 +224,7 @@ const ChatPage = () => {
     });
   }, [currentUser, activeRoomId]);
 
-  // Emit typing indicator event through Socket.io
+  // Emit typing status
   const handleTyping = useCallback((isTyping) => {
     if (!currentUser || !activeRoomId) return;
 
@@ -217,29 +235,138 @@ const ChatPage = () => {
     });
   }, [currentUser, activeRoomId]);
 
-  // Create a new room, switch to it, and broadcast it in real time
-  const handleCreateRoom = async (name) => {
-    const newRoom = await createRoom(name);
-    if (newRoom && newRoom._id) {
-      // Broadcast the newly created room to all other connected users
-      socket.emit('createRoom', newRoom);
+  // Handle room selection and auto-close mobile drawer
+  const handleSelectRoom = (roomId) => {
+    setActiveRoomId(roomId);
+    setMobileDrawerOpen(false);
+  };
 
-      setRooms((prev) => {
-        const exists = prev.some((r) => r._id === newRoom._id);
-        if (exists) return prev;
-        return [...prev, newRoom];
-      });
-      setActiveRoomId(newRoom._id);
+  // Create a new room and broadcast to all users
+  const handleCreateRoom = async (name) => {
+    try {
+      const newRoom = await createRoom(name);
+      if (newRoom && newRoom._id) {
+        socket.emit('createRoom', newRoom);
+
+        setRooms((prev) => {
+          const exists = prev.some((r) => r._id === newRoom._id);
+          if (exists) return prev;
+          return [...prev, newRoom];
+        });
+        setActiveRoomId(newRoom._id);
+        setMobileDrawerOpen(false);
+      }
+    } catch (err) {
+      setSnackbarMessage('Failed to create room. Please try again.');
     }
   };
 
   const currentRoom = rooms.find((r) => r._id === activeRoomId) || { name: 'General' };
+
+  // Reusable Sidebar Content (Used in both Desktop Sidebar and Mobile Drawer)
+  const sidebarContent = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        height: '100%',
+        backgroundColor: '#F4F0E8',
+        width: '100%'
+      }}
+    >
+      {/* Top Section: App Branding & Room List */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+        {/* Branding Header */}
+        <Box
+          sx={{
+            p: 2.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            borderBottom: '1px solid #DDD6C8'
+          }}
+        >
+          <Box
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: '4px',
+              backgroundColor: '#756B56',
+              color: '#FBF9F4',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+          >
+            <ForumRoundedIcon sx={{ fontSize: 20 }} />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+                color: '#292824'
+              }}
+            >
+              NetTalk
+            </Typography>
+            <Typography
+              variant="caption"
+              noWrap
+              onClick={() => {
+                setUserModalOpen(true);
+                setMobileDrawerOpen(false);
+              }}
+              sx={{
+                color: '#716D64',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'block',
+                '&:hover': { textDecoration: 'underline' }
+              }}
+            >
+              {currentUser ? `User: ${currentUser.username}` : 'Set username'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Room Navigation List */}
+        <RoomList
+          rooms={rooms}
+          activeRoomId={activeRoomId}
+          onSelectRoom={handleSelectRoom}
+          onCreateRoom={handleCreateRoom}
+        />
+      </Box>
+
+      {/* Bottom Section: Online Users in Current Room */}
+      <Box
+        sx={{
+          borderTop: '1px solid #DDD6C8',
+          backgroundColor: '#EEE9DE'
+        }}
+      >
+        <OnlineUsersList
+          users={onlineUsers}
+          currentUserId={currentUser?._id}
+          currentUsername={currentUser?.username}
+        />
+      </Box>
+    </Box>
+  );
 
   return (
     <Box
       sx={{
         height: '100vh',
         width: '100vw',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
         backgroundColor: '#F4F0E8',
         display: 'flex',
         alignItems: 'center',
@@ -254,104 +381,48 @@ const ChatPage = () => {
           width: { xs: '100%', sm: '94vw', md: '1100px' },
           backgroundColor: '#FBF9F4',
           borderRadius: { xs: 0, sm: '6px' },
-          border: '1px solid #DDD6C8',
+          border: { xs: 'none', sm: '1px solid #DDD6C8' },
           display: 'flex',
           overflow: 'hidden'
         }}
       >
-        {/* Left Sidebar */}
+        {/* Desktop Permanent Left Sidebar */}
         <Box
           sx={{
-            width: { xs: '240px', sm: '270px' },
-            minWidth: { xs: '240px', sm: '270px' },
+            display: { xs: 'none', md: 'flex' },
+            width: '270px',
+            minWidth: '270px',
             borderRight: '1px solid #DDD6C8',
-            backgroundColor: '#F4F0E8',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
             height: '100%'
           }}
         >
-          {/* Top Section: App Branding & Rooms */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
-            {/* Branding Header */}
-            <Box
-              sx={{
-                p: 2.5,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                borderBottom: '1px solid #DDD6C8'
-              }}
-            >
-              <Box
-                sx={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: '4px',
-                  backgroundColor: '#756B56',
-                  color: '#FBF9F4',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <ForumRoundedIcon sx={{ fontSize: 20 }} />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
-                    color: '#292824'
-                  }}
-                >
-                  NetTalk
-                </Typography>
-                <Typography
-                  variant="caption"
-                  onClick={() => setUserModalOpen(true)}
-                  sx={{
-                    color: '#716D64',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    '&:hover': { textDecoration: 'underline' }
-                  }}
-                >
-                  {currentUser ? `User: ${currentUser.username}` : 'Set username'}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Room List Navigation */}
-            <RoomList
-              rooms={rooms}
-              activeRoomId={activeRoomId}
-              onSelectRoom={(id) => setActiveRoomId(id)}
-              onCreateRoom={handleCreateRoom}
-            />
-          </Box>
-
-          {/* Bottom Section: Online Users */}
-          <Box
-            sx={{
-              borderTop: '1px solid #DDD6C8',
-              backgroundColor: '#EEE9DE'
-            }}
-          >
-            <OnlineUsersList
-              users={onlineUsers}
-              currentUserId={currentUser?._id}
-              currentUsername={currentUser?.username}
-            />
-          </Box>
+          {sidebarContent}
         </Box>
 
-        {/* Main Chat Area */}
-        <Box sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
+        {/* Mobile Responsive Navigation Drawer */}
+        <Drawer
+          variant="temporary"
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          ModalProps={{
+            keepMounted: true // Improves mobile opening performance
+          }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              width: 270,
+              maxWidth: '85vw',
+              backgroundColor: '#F4F0E8',
+              borderRight: '1px solid #DDD6C8',
+              boxSizing: 'border-box'
+            }
+          }}
+        >
+          {sidebarContent}
+        </Drawer>
+
+        {/* Main Chat Conversation Area */}
+        <Box sx={{ flex: 1, height: '100%', overflow: 'hidden', display: 'flex' }}>
           <ChatRoom
             roomName={currentRoom.name}
             onlineCount={onlineUsers.length || 1}
@@ -362,6 +433,7 @@ const ChatPage = () => {
             onSendMessage={handleSendMessage}
             onTyping={handleTyping}
             isLoadingHistory={isLoadingHistory}
+            onToggleMobileMenu={() => setMobileDrawerOpen(true)}
           />
         </Box>
       </Box>
@@ -377,7 +449,8 @@ const ChatPage = () => {
             borderRadius: '6px',
             p: 1,
             width: '100%',
-            maxWidth: '360px'
+            maxWidth: '360px',
+            mx: 2
           }
         }}
       >
@@ -398,6 +471,9 @@ const ChatPage = () => {
               onChange={(e) => setUsernameInput(e.target.value)}
               error={Boolean(userError)}
               helperText={userError}
+              inputProps={{
+                'aria-label': 'Username'
+              }}
               sx={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: '4px'
@@ -423,6 +499,30 @@ const ChatPage = () => {
           </DialogActions>
         </Box>
       </Dialog>
+
+      {/* Simple error notification snackbar */}
+      <Snackbar
+        open={Boolean(snackbarMessage)}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbarMessage('')}
+          severity="info"
+          sx={{
+            backgroundColor: '#EEE9DE',
+            color: '#292824',
+            border: '1px solid #DDD6C8',
+            fontWeight: 500,
+            '& .MuiAlert-icon': {
+              color: '#756B56'
+            }
+          }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

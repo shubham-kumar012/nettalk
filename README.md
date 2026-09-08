@@ -120,6 +120,20 @@ Connected room participants receive message & update UI instantly
 
 ---
 
+## Phase 4 — Final Frontend & Responsive UI
+
+Phase 4 completes the user experience with mobile responsiveness, smooth room switching, feedback states, and layout polish:
+
+- **Responsive Mobile Layout**: On desktop screens, the permanent sidebar displays chat rooms and active members side-by-side with the chat. On mobile viewports (< 900px), the sidebar transforms into a Material UI `Drawer` accessible via a hamburger menu in the chat header.
+- **Auto-Closing Mobile Drawer**: Selecting any room in the mobile drawer automatically switches to that room, loads its history, and closes the drawer for an unobstructed chat view.
+- **Zero Horizontal Overflow**: Designed to fit viewport widths seamlessly from small mobile screens (320px, 360px, 375px, 390px, 414px) up to wide desktop monitors (1440px+). Messages and usernames wrap gracefully without horizontal scrollbars.
+- **Smooth Room Switching**: When switching rooms, previous messages are cleared immediately, a loading state appears while fetching history from MongoDB, and the user is subscribed to real-time Socket.io events in the new channel.
+- **Message Validation & Empty States**: Empty and whitespace-only messages are blocked on both frontend and backend. Channels with no previous messages display a gentle empty state.
+- **Connection & Error States**: Includes subtle notification alerts and snackbars for connection drops or API failures.
+- **Accessible & Human-Friendly**: All interactive elements include accessible labels, clean semantic markup, and plain-English code comments for easy explanation during technical interviews.
+
+---
+
 ## API Documentation
 
 ### Health Check
@@ -195,3 +209,4 @@ PORT=5000
 CLIENT_URL=http://localhost:3000
 MONGODB_URI=mongodb://localhost:27017/nettalk
 ```
+
