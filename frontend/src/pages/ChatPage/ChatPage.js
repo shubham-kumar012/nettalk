@@ -93,7 +93,7 @@ const ChatPage = () => {
                   NetTalk
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#716D64', fontWeight: 500 }}>
-                  Interview Workspace
+                  Team Chat
                 </Typography>
               </Box>
             </Box>
