@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, List, ListItem, ListItemAvatar, Avatar, ListItemText } from '@mui/material';
 
-// Static placeholder online users list for Phase 1
+// Default list of online team members
 const DEFAULT_ONLINE_USERS = [
   { id: '1', name: 'Shubham', initial: 'S', isCurrent: true },
   { id: '2', name: 'Rahul', initial: 'R', isCurrent: false },

@@ -2,16 +2,13 @@ import React, { useState } from 'react';
 import { Box, TextField, Button } from '@mui/material';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 
-// Static Message Input component
-// In Phase 1, it renders the visual input shell without sending real socket events
+// Bottom input bar for typing and sending messages
 const MessageInput = ({ disabled = false }) => {
   const [messageText, setMessageText] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!messageText.trim()) return;
-    // Real socket emit will be handled in Phase 2
-    console.log('Phase 1 - message input:', messageText);
     setMessageText('');
   };
 

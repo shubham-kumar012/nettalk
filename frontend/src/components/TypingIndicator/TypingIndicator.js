@@ -1,8 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-// Placeholder component for typing indicator
-// Real-time socket event handling will be added in Phase 2
+// Shows an active typing status when another user is composing a message
 const TypingIndicator = ({ typingUser = null }) => {
   if (!typingUser) {
     return null;

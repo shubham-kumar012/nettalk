@@ -59,8 +59,7 @@ const RoomList = ({
             }
           }}
           onClick={() => {
-            // Room creation modal will be implemented in later phases
-            console.log('Phase 1 - create room clicked');
+            // Placeholder click action for new room creation
           }}
         >
           New Room
