@@ -1,13 +1,13 @@
-// Base API helper functions for backend endpoints
+// Base API client configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Health check endpoint
+// Server health check
 export const checkHealth = async () => {
   const response = await fetch(`${API_BASE_URL}/health`);
   return await response.json();
 };
 
-// User endpoints
+// User operations
 export const getUsers = async () => {
   const response = await fetch(`${API_BASE_URL}/users`);
   return await response.json();
@@ -22,7 +22,7 @@ export const createUser = async (username) => {
   return await response.json();
 };
 
-// Rooms API
+// Room operations
 export const getRooms = async () => {
   const response = await fetch(`${API_BASE_URL}/rooms`);
   return await response.json();
@@ -37,7 +37,7 @@ export const createRoom = async (name) => {
   return await response.json();
 };
 
-// Messages API
+// Message operations
 export const getMessages = async (roomId) => {
   const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/messages`);
   return await response.json();

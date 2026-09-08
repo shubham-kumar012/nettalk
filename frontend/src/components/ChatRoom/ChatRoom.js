@@ -4,7 +4,7 @@ import TagRoundedIcon from '@mui/icons-material/TagRounded';
 import MessageInput from '../MessageInput/MessageInput';
 import TypingIndicator from '../TypingIndicator/TypingIndicator';
 
-// Sample conversation items for UI preview
+// Initial sample messages for the conversation view
 const STATIC_MESSAGES = [
   {
     id: 'm1',

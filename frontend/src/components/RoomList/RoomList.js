@@ -59,7 +59,7 @@ const RoomList = ({
             }
           }}
           onClick={() => {
-            // Placeholder click action for new room creation
+            // Trigger room creation dialog or action
           }}
         >
           New Room

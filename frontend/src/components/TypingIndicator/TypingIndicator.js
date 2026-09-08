@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-// Shows an active typing status when another user is composing a message
+// Displays an active typing notice when another user is composing a message
 const TypingIndicator = ({ typingUser = null }) => {
   if (!typingUser) {
     return null;

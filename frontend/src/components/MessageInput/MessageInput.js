@@ -2,13 +2,17 @@ import React, { useState } from 'react';
 import { Box, TextField, Button } from '@mui/material';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 
-// Bottom input bar for typing and sending messages
-const MessageInput = ({ disabled = false }) => {
+// Bottom composer bar for drafting and sending chat messages
+const MessageInput = ({ disabled = false, onSendMessage }) => {
   const [messageText, setMessageText] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!messageText.trim()) return;
+    
+    if (onSendMessage) {
+      onSendMessage(messageText.trim());
+    }
     setMessageText('');
   };
 

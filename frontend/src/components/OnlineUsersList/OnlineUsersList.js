@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, List, ListItem, ListItemAvatar, Avatar, ListItemText } from '@mui/material';
 
-// Default list of online team members
+// Default list of active channel members
 const DEFAULT_ONLINE_USERS = [
   { id: '1', name: 'Shubham', initial: 'S', isCurrent: true },
   { id: '2', name: 'Rahul', initial: 'R', isCurrent: false },

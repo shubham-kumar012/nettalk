@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 
-// Material UI custom theme with a warm cream/off-white palette
+// Theme styling and color palette configuration
 const theme = createTheme({
   palette: {
     mode: 'light',

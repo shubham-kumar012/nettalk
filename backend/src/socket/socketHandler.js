@@ -1,4 +1,4 @@
-// Manages client socket connections
+// Handle socket connections and disconnects
 const initializeSocket = (io) => {
   io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`);

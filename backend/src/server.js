@@ -27,7 +27,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Socket.io initialization
+// Set up Socket.io with CORS for real-time communication
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
