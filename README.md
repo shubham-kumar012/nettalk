@@ -30,16 +30,16 @@ NetTalk is a collaborative workspace chat platform where users can create topics
 
 ## Key Features
 
-- 💬 **Real-Time Room-Based Chat**: Instant messaging powered by Socket.io with zero-refresh broadcasting.
-- 📂 **Multi-Room Channel Navigation**: Seamlessly create and switch between channels with immediate message history hydration.
-- 👥 **Dynamic Live Presence**: Real-time tracking of active online members per room with automatic join/leave updates.
-- ✍️ **Typing Indicators**: Visual feedback when room participants are composing a message.
-- 💾 **Message Persistence**: All conversations are stored in MongoDB with full sender association and timestamps.
-- 📱 **Responsive Dual-Mode UI**:
+- **Real-Time Room-Based Chat**: Instant messaging powered by Socket.io with zero-refresh broadcasting.
+- **Multi-Room Channel Navigation**: Seamlessly create and switch between channels with immediate message history hydration.
+- **Dynamic Live Presence**: Real-time tracking of active online members per room with automatic join/leave updates.
+- **Typing Indicators**: Visual feedback when room participants are composing a message.
+- **Message Persistence**: All conversations are stored in MongoDB with full sender association and timestamps.
+- **Responsive Dual-Mode UI**:
   - **Desktop (≥900px)**: Side-by-side split view with room list, chat stream, and active members sidebar.
   - **Mobile (<900px)**: Compact view with a slide-out navigation drawer accessible via the top app bar.
-- 🎨 **Custom Warm Aesthetic**: Custom Material UI theme with warm cream and earthy tones for low eye strain.
-- 🛡️ **Validation & Error Handling**: Input sanitization, empty-message prevention, network state recovery, and accessible components.
+- **Custom Warm Aesthetic**: Custom Material UI theme with warm cream and earthy tones for low eye strain.
+- **Validation & Error Handling**: Input sanitization, empty-message prevention, network state recovery, and accessible components.
 
 ---
 
