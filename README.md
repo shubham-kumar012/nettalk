@@ -1,45 +1,101 @@
 # NetTalk
 
-NetTalk is a lightweight, real-time team chat application designed for simple and distraction-free communication across multiple topic rooms.
-
-Built with a **Node.js/Express** backend and a **React + Material UI** frontend, the project emphasizes a clean, modular structure, responsive desktop design, and scalable real-time communication using **Socket.io**.
+NetTalk is a modern, full-stack, real-time team chat application built for distraction-free communication across dedicated topic rooms. It combines a persistent document database with low-latency bi-directional WebSockets and a clean, responsive user interface.
 
 ---
 
 ## Live Demo & Deployment
 
-- **Frontend (Deployed on Vercel)**: [https://frontend-olive-five-40.vercel.app](https://frontend-olive-five-40.vercel.app)
-- **Backend API (Deployed on Render)**: [https://nettalk-2hsr.onrender.com/api](https://nettalk-2hsr.onrender.com/api)
-- **Backend Health Check**: [https://nettalk-2hsr.onrender.com/api/health](https://nettalk-2hsr.onrender.com/api/health)
+| Service | Platform | URL |
+| :--- | :--- | :--- |
+| **Frontend Web App** | Vercel | [https://frontend-olive-five-40.vercel.app](https://frontend-olive-five-40.vercel.app) |
+| **Backend API** | Render | [https://nettalk-2hsr.onrender.com/api](https://nettalk-2hsr.onrender.com/api) |
+| **Backend Health Check** | Render | [https://nettalk-2hsr.onrender.com/api/health](https://nettalk-2hsr.onrender.com/api/health) |
 
 ---
 
-## Features
+## What is NetTalk & Why Was It Built?
 
-- **Desktop-first Chat Layout**: Clean side-by-side interface with channel navigation, active members list, and conversation feed.
-- **Custom Warm Visual Theme**: Designed with an understated, warm cream/earthy color palette for comfortable reading without eye strain.
-- **Room-based Real-Time Communication**: Switch seamlessly between channels like `# General`, `# Developers`, and `# Random`.
-- **Instant Messaging & Broadcasting**: Messages are saved to MongoDB and broadcasted in real-time to active room members via Socket.io.
-- **Room Isolation**: Messages sent in one room are delivered strictly to users in that room.
-- **Active Presence**: Dynamic online users list showing connected members per room with status indicators.
-- **Typing Indicator**: Real-time feedback when another participant is typing.
-- **Persistent Chat History**: Previous room messages are loaded from MongoDB upon joining a channel.
-- **Modular Component Architecture**: Decoupled UI components, MongoDB data models, and service layers for easy maintenance and testing.
+### The "What"
+NetTalk is a collaborative workspace chat platform where users can create topics/rooms, switch between channels, see who is active in real time, and exchange instant messages backed by database persistence.
+
+### The "Why"
+- **Dual-Protocol Efficiency**: Traditional HTTP polling introduces lag and unnecessary overhead, while pure in-memory WebSockets lose conversation history on server restarts. NetTalk uses a **dual-protocol architecture**: REST APIs for initial state/history hydration, and Socket.io WebSockets for instant, low-latency messaging.
+- **Room Isolation & Privacy**: Messages and typing indicators sent in `# General` never bleed into `# Developers` or `# Random`. Each channel functions as an isolated broadcast namespace.
+- **Persistent Chat History**: Every message is committed to MongoDB before broadcasting, ensuring that new or returning team members immediately see full context.
+- **Distraction-Free, Human-Centric UI**: Instead of overwhelming noise, NetTalk uses a custom warm, earthy color palette and a clean layout designed for comfortable extended use.
+- **Adaptive Across All Devices**: Full responsiveness with a permanent split-pane layout on desktop and an intuitive sliding drawer on mobile devices.
+
+---
+
+## Key Features
+
+- 💬 **Real-Time Room-Based Chat**: Instant messaging powered by Socket.io with zero-refresh broadcasting.
+- 📂 **Multi-Room Channel Navigation**: Seamlessly create and switch between channels with immediate message history hydration.
+- 👥 **Dynamic Live Presence**: Real-time tracking of active online members per room with automatic join/leave updates.
+- ✍️ **Typing Indicators**: Visual feedback when room participants are composing a message.
+- 💾 **Message Persistence**: All conversations are stored in MongoDB with full sender association and timestamps.
+- 📱 **Responsive Dual-Mode UI**:
+  - **Desktop (≥900px)**: Side-by-side split view with room list, chat stream, and active members sidebar.
+  - **Mobile (<900px)**: Compact view with a slide-out navigation drawer accessible via the top app bar.
+- 🎨 **Custom Warm Aesthetic**: Custom Material UI theme with warm cream and earthy tones for low eye strain.
+- 🛡️ **Validation & Error Handling**: Input sanitization, empty-message prevention, network state recovery, and accessible components.
+
+---
+
+## System Architecture & Data Flow
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                    React Frontend Client                │
+│                                                         │
+│  ┌───────────────────────┐   ┌───────────────────────┐  │
+│  │   REST API Services   │   │   Socket.io Client    │  │
+│  │      (Axios/Fetch)    │   │ (Real-Time Messaging) │  │
+│  └───────────┬───────────┘   └───────────┬───────────┘  │
+└──────────────┼───────────────────────────┼──────────────┘
+               │ HTTP Requests             │ WebSocket Events
+               │ (Initial Load / History)  │ (Live Broadcasts)
+               ▼                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Node.js / Express Server              │
+│                                                         │
+│  ┌───────────────────────┐   ┌───────────────────────┐  │
+│  │     REST Routes       │   │  Socket.io Handler    │  │
+│  │ (Users, Rooms, Msgs)  │   │  (joinRoom, typing,   │  │
+│  │                       │   │   chatMessage, etc.)  │  │
+│  └───────────┬───────────┘   └───────────┬───────────┘  │
+└──────────────┼───────────────────────────┼──────────────┘
+               │                           │
+               ▼                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                  MongoDB Database Layer                 │
+│         (Collections: Users, Rooms, Messages)           │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Real-Time Message Flow
+1. User types and submits a message in an active room.
+2. Frontend emits `chatMessage` event with `{ roomId, senderId, content }`.
+3. Server validates and persists the document into MongoDB.
+4. Server populates sender details (`username`, `id`) and broadcasts the message: `io.to(roomId).emit("chatMessage", message)`.
+5. All connected clients in that room receive the payload and update their message list immediately.
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-- **React.js** (Create React App)
-- **Material UI (MUI)** — Component library & customized theme system
-- **Socket.io Client** — Real-time bi-directional WebSocket communication
+- **React.js** (Create React App) — Component-based UI library
+- **Material UI (MUI v5)** — Component design system & custom theme engine
+- **Socket.io Client** — Client-side WebSocket connection & event subscription
+- **Axios** — HTTP client for REST API communication
 
 ### Backend
-- **Node.js & Express** — REST API & HTTP server
-- **Socket.io** — Real-time event communication engine
-- **MongoDB & Mongoose** — Document database & data modeling
-- **Cors & Dotenv** — Middleware configuration and environment management
+- **Node.js & Express** — REST API endpoints and HTTP server
+- **Socket.io** — WebSocket server for room management and real-time broadcasting
+- **MongoDB & Mongoose** — Document database & ODM schema modeling
+- **Cors & Dotenv** — Cross-origin resource sharing and environment management
 
 ---
 
@@ -47,173 +103,146 @@ Built with a **Node.js/Express** backend and a **React + Material UI** frontend,
 
 ```text
 NetTalk/
-│
 ├── frontend/                     # React web client
-│   ├── public/                   # Static HTML template & web manifest
+│   ├── public/                   # Static assets, favicon, & index.html
 │   ├── src/
-│   │   ├── components/           # Reusable UI components
-│   │   │   ├── ChatRoom/         # Room header & scrollable message feed
-│   │   │   ├── MessageInput/     # Message composer with send button & typing trigger
-│   │   │   ├── OnlineUsersList/  # Active online members list
-│   │   │   ├── RoomList/         # Channels list & room creation dialog
-│   │   │   └── TypingIndicator/  # Active typing status component
+│   │   ├── components/           # Modular UI components
+│   │   │   ├── ChatRoom/         # Room header, message feed, & message bubbles
+│   │   │   ├── MessageInput/     # Input composer, send action, & typing dispatch
+│   │   │   ├── OnlineUsersList/  # Live active room members panel
+│   │   │   ├── RoomList/         # Channel switcher & room creation dialog
+│   │   │   └── TypingIndicator/  # Animated typing status indicator
 │   │   ├── pages/
-│   │   │   └── ChatPage/         # Main chat container connecting Socket.io & REST
+│   │   │   └── ChatPage/         # Primary container orchestrating state, REST & Sockets
 │   │   ├── services/
-│   │   │   ├── api.js            # REST API client helper
-│   │   │   └── socket.js         # Socket.io connection setup
-│   │   ├── App.js                # App entry with MUI ThemeProvider
-│   │   ├── index.js              # DOM root mount
-│   │   ├── index.css             # Base reset & typography styling
+│   │   │   ├── api.js            # Axios REST API client methods
+│   │   │   └── socket.js         # Socket.io connection initialization
+│   │   ├── App.js                # Root application with MUI ThemeProvider
+│   │   ├── index.js              # DOM entry point
+│   │   ├── index.css             # Global CSS reset & typography styles
 │   │   └── theme.js              # Custom warm color palette configuration
 │   └── package.json
 │
 ├── backend/                      # Node.js Express server
 │   ├── src/
-│   │   ├── config/               # Database and server config
-│   │   ├── controllers/          # API route controllers
+│   │   ├── config/               # Database connection configuration
+│   │   ├── controllers/          # Business logic for REST endpoints
 │   │   │   ├── healthController.js
 │   │   │   ├── userController.js
 │   │   │   ├── roomController.js
 │   │   │   └── messageController.js
-│   │   ├── models/               # Mongoose data models
-│   │   │   ├── User.js
-│   │   │   ├── Room.js
-│   │   │   └── Message.js
-│   │   ├── routes/               # Express route declarations
+│   │   ├── models/               # Mongoose data schemas
+│   │   │   ├── User.js           # User schema (username, timestamps)
+│   │   │   ├── Room.js           # Chat room schema (name, description)
+│   │   │   └── Message.js        # Message schema (room, sender, content)
+│   │   ├── routes/               # Express route definitions
 │   │   │   ├── healthRoutes.js
 │   │   │   ├── users.js
 │   │   │   ├── rooms.js
 │   │   │   └── messages.js
-│   │   ├── socket/               # Socket.io connection & event handlers
-│   │   └── server.js             # Server entry point
-│   ├── .env.example              # Environment variables template
-│   ├── .env                      # Local environment settings
-│   ├── package.json
-│   └── .gitignore
+│   │   ├── socket/
+│   │   │   └── socketHandler.js  # Socket.io room lifecycle & event handlers
+│   │   └── server.js             # HTTP server setup & startup script
+│   ├── .env.example              # Backend environment variables template
+│   └── package.json
 │
-├── README.md
-└── .gitignore
+└── README.md                     # Project documentation
 ```
 
 ---
 
-## Phase 3 — Real-Time Chat with Socket.io
+## API & Real-Time Event Reference
 
-Phase 3 connects the React frontend, Express backend, and MongoDB database using Socket.io for live communication:
+### REST Endpoints
 
-- **Socket.io Connection**: Persistent WebSocket connection with automatic reconnection.
-- **Joining Chat Rooms (`joinRoom`)**: Users join specific room channels and leave previous ones.
-- **Real-Time Messaging (`chatMessage`)**: Messages sent by any user are instantly delivered to all participants in the active room.
-- **MongoDB Message Persistence**: Every message is stored in MongoDB before broadcast, preserving full chat history.
-- **Room-Based Isolation**: Messages and notifications in `# General` do not leak into `# Developers` or other rooms.
-- **Live Online Users (`onlineUsers`)**: In-memory tracking of currently connected sockets per room with instant join/leave updates.
-- **Typing Indicator (`typing`)**: Lightweight typing status notification that clears automatically on send or inactivity.
-- **Chat History Loading**: REST API (`GET /api/rooms/:roomId/messages`) loads stored conversation history upon entering any room.
-- **Room Switching**: Seamlessly switches channels, loads past history, and updates online members without page reloads.
+#### Health Check
+- `GET /api/health` — Returns server health status.
 
-### Real-Time Socket.io Flow
-
-```text
-User types message
-        ↓
-socket.emit("chatMessage", { roomId, senderId, content })
-        ↓
-Server receives message & saves it to MongoDB
-        ↓
-Server broadcasts: io.to(roomId).emit("chatMessage", savedMessage)
-        ↓
-Connected room participants receive message & update UI instantly
-```
-
----
-
-## Phase 4 — Final Frontend & Responsive UI
-
-Phase 4 completes the user experience with mobile responsiveness, smooth room switching, feedback states, and layout polish:
-
-- **Responsive Mobile Layout**: On desktop screens, the permanent sidebar displays chat rooms and active members side-by-side with the chat. On mobile viewports (< 900px), the sidebar transforms into a Material UI `Drawer` accessible via a hamburger menu in the chat header.
-- **Auto-Closing Mobile Drawer**: Selecting any room in the mobile drawer automatically switches to that room, loads its history, and closes the drawer for an unobstructed chat view.
-- **Zero Horizontal Overflow**: Designed to fit viewport widths seamlessly from small mobile screens (320px, 360px, 375px, 390px, 414px) up to wide desktop monitors (1440px+). Messages and usernames wrap gracefully without horizontal scrollbars.
-- **Smooth Room Switching**: When switching rooms, previous messages are cleared immediately, a loading state appears while fetching history from MongoDB, and the user is subscribed to real-time Socket.io events in the new channel.
-- **Message Validation & Empty States**: Empty and whitespace-only messages are blocked on both frontend and backend. Channels with no previous messages display a gentle empty state.
-- **Connection & Error States**: Includes subtle notification alerts and snackbars for connection drops or API failures.
-- **Accessible & Human-Friendly**: All interactive elements include accessible labels, clean semantic markup, and plain-English code comments for easy explanation during technical interviews.
-
----
-
-## API Documentation
-
-### Health Check
-- `GET /api/health` — Verify backend server status
-
-### Users
-- `POST /api/users` — Create a new user identity  
+#### Users
+- `POST /api/users` — Register / initialize a user session.  
   *Body:* `{"username": "Shubham"}`
-- `GET /api/users` — Get all users
+- `GET /api/users` — Fetch all registered users.
 
-### Rooms
-- `POST /api/rooms` — Create a new chat room  
-  *Body:* `{"name": "Developers"}`
-- `GET /api/rooms` — Get all chat rooms
+#### Rooms
+- `POST /api/rooms` — Create a new topic room.  
+  *Body:* `{"name": "Designers"}`
+- `GET /api/rooms` — Fetch list of all existing rooms.
 
-### Messages
-- `POST /api/rooms/:roomId/messages` — Create and store a new message in a room  
-  *Body:* `{"senderId": "<userId>", "content": "Hello everyone!"}`
-- `GET /api/rooms/:roomId/messages` — Get chronological chat history for a room (with populated sender info)
+#### Messages
+- `POST /api/rooms/:roomId/messages` — Create and store a new message.  
+  *Body:* `{"senderId": "<userId>", "content": "Hello team!"}`
+- `GET /api/rooms/:roomId/messages` — Fetch full chronological message history for a given room.
+
+---
+
+### Socket.io Real-Time Events
+
+| Event Name | Direction | Payload | Description |
+| :--- | :--- | :--- | :--- |
+| `joinRoom` | Client ➔ Server | `{ roomId, userId, username }` | Joins a room, leaves prior room, updates online list |
+| `chatMessage` | Client ➔ Server | `{ roomId, senderId, content }` | Submits a message to be saved and broadcast |
+| `chatMessage` | Server ➔ Client | `Message` object | Broadcasts newly saved message to room members |
+| `typing` | Client ➔ Server | `{ roomId, username, isTyping }` | Informs room participants of typing activity |
+| `typing` | Server ➔ Client | `{ username, isTyping }` | Broadcasts typing state to other members in room |
+| `onlineUsers` | Server ➔ Client | `Array<User>` | Broadcasts updated list of active users in the room |
+| `createRoom` | Client ➔ Server | `Room` object | Notifies server of newly created room |
+| `roomCreated` | Server ➔ Client | `Room` object | Globally broadcasts new room to all connected clients |
+| `disconnect` | Internal | — | Automatically cleans up presence on socket drop |
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v16 or higher recommended)
-- [npm](https://www.npmjs.com/)
-- [MongoDB](https://www.mongodb.com/) (Local instance or MongoDB Atlas URI)
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [MongoDB](https://www.mongodb.com/) (Local database or MongoDB Atlas connection string)
 
 ---
 
 ### 1. Backend Setup
 
 ```bash
-# Navigate to the backend directory
+# 1. Navigate to the backend directory
 cd backend
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start the development server
+# 3. Create your environment configuration
+cp .env.example .env
+
+# 4. Start the backend development server
 npm run dev
 ```
 
-The backend server will run on `http://localhost:5000`.  
-You can test the server status by opening `http://localhost:5000/api/health`.
+The backend server will start on `http://localhost:5000`. You can verify it is running by checking `http://localhost:5000/api/health`.
 
 ---
 
 ### 2. Frontend Setup
 
 ```bash
-# Navigate to the frontend directory
+# 1. Navigate to the frontend directory
 cd frontend
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start the React development server
+# 3. Create your environment configuration
+cp .env.example .env
+
+# 4. Start the React development server
 npm start
 ```
 
-The application will open in your browser at `http://localhost:3000`.
+The application will automatically launch in your browser at `http://localhost:3000`.
 
 ---
 
 ## Environment Variables
 
 ### Backend (`backend/.env`)
-
-Create `backend/.env` based on `backend/.env.example`:
-
 ```env
 PORT=5000
 CLIENT_URL=http://localhost:3000
@@ -221,11 +250,12 @@ MONGODB_URI=mongodb://localhost:27017/nettalk
 ```
 
 ### Frontend (`frontend/.env`)
-
-Create `frontend/.env` based on `frontend/.env.example`:
-
 ```env
 REACT_APP_API_URL=http://localhost:5000/api
 REACT_APP_SOCKET_URL=http://localhost:5000
 ```
+
+## License
+
+This project is licensed under the MIT License — feel free to use and adapt it for your own projects.
 
